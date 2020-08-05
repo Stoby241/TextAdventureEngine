@@ -1,10 +1,79 @@
 {
+
+  "StartCharacter" : "Rufus",
+
   "Characters":
   [
     {
       "Name": "Rufus"
     }
   ],
+
+  "Entities":
+  [
+    {
+      "Name": "Enity1",
+      "ObservationTexts":
+      [
+        {
+          "Text" : "Moin",
+          "Conditions":
+          [
+            {
+              "Name": "Base"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+
+  "Items":
+  [
+    {
+      "Name": "Item1",
+      "ObservationTexts":
+      [
+        {
+          "Text" : "Moin",
+          "Conditions":
+          [
+            {
+              "Name": "Base"
+            }
+          ]
+        }
+      ],
+      "Interactions":
+      [
+        {
+          "Objects": ["Item1", "Item2"],
+          "Text": "Ha das geht.",
+          "Actions": ["ADDI:Item2", "RMI:Item2"]
+        }
+      ]
+    },
+    {
+      "Name": "Item2",
+      "ObservationTexts":
+      [
+        {
+          "Text" : "Moin",
+          "Conditions":
+          [
+            {
+              "Name": "Base"
+            }
+          ]
+        }
+      ],
+      "Interactions":
+      [
+
+      ]
+    }
+  ],
+
   "Scenes":
   [
     {
@@ -13,26 +82,8 @@
       [
         {
           "Name" : "Position1",
-          "Enities":
-          [
-            {
-              "Name": "Enity1",
-              "IsClone": "false",
-              "TextOut":
-              [
-                {
-                  "Text" : "Moin",
-                  "Conditions":
-                  [
-                    {
-                      "Name": "Base"
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "TextOut":
+          "Enities": ["Enity1"],
+          "ObservationTexts":
           [
             {
               "Text" : "LOL",
@@ -48,5 +99,4 @@
       ]
     }
   ]
-
 }
