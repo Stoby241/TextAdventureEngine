@@ -1,0 +1,52 @@
+{
+  "Characters":
+  [
+    {
+      "Name": "Rufus"
+    }
+  ],
+  "Scenes":
+  [
+    {
+      "Name": "Scene1",
+      "Positions":
+      [
+        {
+          "Name" : "Position1",
+          "Enities":
+          [
+            {
+              "Name": "Enity1",
+              "IsClone": "false",
+              "TextOut":
+              [
+                {
+                  "Text" : "Moin",
+                  "Conditions":
+                  [
+                    {
+                      "Name": "Base"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "TextOut":
+          [
+            {
+              "Text" : "LOL",
+              "Conditions":
+              [
+                {
+                  "Name": "Base"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+
+}
