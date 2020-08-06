@@ -14,44 +14,27 @@ public class Main {
     public Main() {
         ins = this;
 
-        LoadGame();
-    }
+        loadGame();
 
-    Character currentCharacter;
-    public Character getCurrentCharacter() {
-        return currentCharacter;
+        run();
     }
 
     Character[] characters;
-    Entity[] entities;
-    Item[] items;
     Scene[] scenes;
 
-    public void LoadGame(){
-        JSONObject jo = Utility.LoadJson("/resources/SaveGame.json");
+    Character currentCharacter;
+    Scene currentScene;
+    Position currentPosition;
+
+    public void loadGame(){
+        JSONObject jo = Utility.loadJson("/resources/SaveGame.json");
 
         JSONArray jCharacters = (JSONArray) jo.get("Characters");
         characters = new Character[jCharacters.size()];
         for (int i = 0; i < jCharacters.size(); i++){
             JSONObject jCharacter = (JSONObject) jCharacters.get(i);
-            Character character = new Character((String) jCharacter.get("Name"));
+            Character character = new Character((String) jCharacter.get("Id"), (String) jCharacter.get("Name"));
             characters[i] = character;
-        }
-
-        JSONArray jEntities = (JSONArray) jo.get("Entities");
-        entities = new Entity[jEntities.size()];
-        for (int i = 0; i < jEntities.size(); i++){
-            JSONObject jEntity = (JSONObject) jEntities.get(i);
-            Entity entity = new Entity((String) jEntity.get("Name"));
-            entities[i] = entity;
-        }
-
-        JSONArray jItems = (JSONArray) jo.get("Items");
-        items = new Item[jItems.size()];
-        for (int i = 0; i < jItems.size(); i++){
-            JSONObject jItem = (JSONObject) jItems.get(i);
-            Item item = new Item((String) jItem.get("Name"));
-            items[i] = item;
         }
 
         JSONArray jScenes = (JSONArray) jo.get("Scenes");
@@ -60,74 +43,98 @@ public class Main {
 
             JSONObject jScene = (JSONObject) jScenes.get(i);
 
+            JSONArray jEntities = (JSONArray) jScene.get("Entities");
+            Entity[] entities = new Entity[jEntities.size()];
+            for (int j = 0; j < jEntities.size(); j++){
+                JSONObject jEntity = (JSONObject) jEntities.get(j);
+                Entity entity = new Entity((String) jEntity.get("Id"), (String) jEntity.get("Name"));
+                entities[j] = entity;
+            }
+
+            JSONArray jItems = (JSONArray) jScene.get("Items");
+            Item[] items = new Item[jItems.size()];
+            for (int j = 0; j < jItems.size(); j++){
+                JSONObject jItem = (JSONObject) jItems.get(j);
+                Item item = new Item((String) jItem.get("Id"), (String) jItem.get("Name"));
+                items[j] = item;
+            }
+
             JSONArray jPositions = (JSONArray) jScene.get("Positions");
             Position[] positions = new Position[jPositions.size()];
-
             for (int j = 0; j < jPositions.size(); j++){
 
                 JSONObject jPosition = (JSONObject) jPositions.get(j);
 
-                JSONArray jEntitiesNames = (JSONArray) jPosition.get("Entities");
-                Entity[] posEntities = new Entity[jEntities.size()];
+                JSONArray jEntityIds = (JSONArray) jPosition.get("Entities");
+                Entity[] posEntities = new Entity[jEntityIds.size()];
 
-                for (int k = 0; k < jEntitiesNames.size(); k++){
-                    for (Entity entity :entities) {
-                        if(entity.name.equals(jEntitiesNames.get(k))){
+                for (int k = 0; k < jEntityIds.size(); k++){
+                    for (Entity entity : entities) {
+                        if(entity.id.equals(jEntityIds.get(k))){
                             posEntities[k] = entity;
                             break;
                         }
                     }
                 }
 
-                Position position = new Position((String) jPosition.get("Name"), posEntities);
-                position.observationTexts = loadObservationTexts(jPosition);
+                Position position = new Position((String) jPosition.get("Id"), (String) jPosition.get("Name"), posEntities);
                 positions[j] = position;
             }
 
-            Scene scene = new Scene((String) jScene.get("Name"), positions);
+            Scene scene = new Scene((String) jScene.get("Id"), (String) jScene.get("Name"), positions, entities, items);
             scenes[i] = scene;
-        }
 
-        for (Character character : characters) {
-            if(character.name.equals(jo.get("StartCharacter"))){
-                currentCharacter = character;
+            for (int j = 0; j < jEntities.size(); j++){
+                JSONObject jEntity = (JSONObject) jEntities.get(j);
+                entities[j].observationTexts = loadObservationTexts(jEntity,scene);
+                loadInteractions(jEntity,scene);
             }
-        }
 
-        for (int i = 0; i < jEntities.size(); i++){
-            JSONObject jEntity = (JSONObject) jEntities.get(i);
-            entities[i].observationTexts = loadObservationTexts(jEntity);
-            loadInteractions(jEntity);
-        }
-
-        for (int i = 0; i < jItems.size(); i++){
-            JSONObject jItem = (JSONObject) jItems.get(i);
-            items[i].observationTexts = loadObservationTexts(jItem);
-            loadInteractions(jItem);
-        }
-
-        for (int i = 0; i < jScenes.size(); i++){
-
-            JSONObject jScene = (JSONObject) jScenes.get(i);
-            Scene scene = scenes[i];
-            JSONArray jPositions = (JSONArray) jScene.get("Positions");
+            for (int j = 0; j < jItems.size(); j++){
+                JSONObject jItem = (JSONObject) jItems.get(j);
+                items[j].observationTexts = loadObservationTexts(jItem,scene);
+                loadInteractions(jItem,scene);
+            }
 
             for (int j = 0; j < jPositions.size(); j++){
 
+
                 JSONObject jPosition = (JSONObject) jPositions.get(j);
                 Position position = scene.positions[j];
+                position.observationTexts = loadObservationTexts(jPosition,scene);
+
                 JSONArray jLinks = (JSONArray) jPosition.get("PositionLinks");
 
                 for (Object jLink : jLinks) {
-                    String name = (String) jLink;
-                    addPosLink(name, position);
+                    String id = (String) jLink;
+                    addPosLink(id, position);
                 }
             }
         }
 
+        for (Character character : characters) {
+            if(character.id.equals(jo.get("StartCharacter"))){
+                currentCharacter = character;
+            }
+        }
+
+        for (Scene scene : scenes) {
+            if(scene.id.equals(jo.get("StartScene"))){
+                currentScene = scene;
+                for (Position position : scene.positions) {
+                    if(position.id.equals(jo.get("StartPosition"))) {
+                        currentPosition = position;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+
+        running = true;
     }
 
-    private ObservationText[] loadObservationTexts(JSONObject jObject){
+    private ObservationText[] loadObservationTexts(JSONObject jObject, Scene scene){
 
         JSONArray jObservationTexts = (JSONArray) jObject.get("ObservationTexts");
         if(jObservationTexts == null) return new ObservationText[0];
@@ -137,43 +144,12 @@ public class Main {
         for (int t = 0; t < jObservationTexts.size(); t++){
             JSONObject jObservationText = (JSONObject) jObservationTexts.get(t);
 
-            JSONArray jConditions = (JSONArray) jObservationText.get("Conditions");
-
-            ObservationText observationText;
-            if(jConditions == null){
-                observationText = new ObservationText((String) jObservationText.get("Text"));
-            }
-            else{
-
-                ObservationCondition[] observationConditions = new ObservationCondition[jConditions.size()];
-
-                for (int c = 0; c < jConditions.size(); c++) {
-                    JSONObject jCondition = (JSONObject) jConditions.get(c);
-
-                    ObservationCondition observationCondition = null;
-
-                    String name = (String) jCondition.get("Name");
-                    switch (name){
-                        case"HasItem":
-                            for (Item item : items) {
-                                if(item.name.equals(jCondition.get("ItemName"))){
-                                    observationCondition = new HasItemCondition(item);
-                                    break;
-                                }
-                            }
-                            break;
-                    }
-                    observationConditions[c] = observationCondition;
-                }
-                observationText = new ObservationText((String) jObservationText.get("Text"), observationConditions);
-            }
-
+            ObservationText observationText = new ObservationText((String) jObservationText.get("Text"), loadContitions(jObject, jObservationText, scene));
             observationTexts[t] = observationText;
         }
         return observationTexts;
     }
-
-    private void loadInteractions(JSONObject jObject){
+    private void loadInteractions(JSONObject jObject, Scene scene){
         JSONArray jInteractions = (JSONArray) jObject.get("Interactions");
         if(jInteractions == null) return;
 
@@ -183,11 +159,9 @@ public class Main {
             String text = (String) jInteraction.get("Text");
 
             JSONArray jActions = (JSONArray) jInteraction.get("Actions");
-            Interaction interaction;
-            if (jActions == null) {
-                interaction = new Interaction(text);
-            } else {
-                Action[] actions = new Action[jActions.size()];
+            Action[] actions = null;
+            if (jActions != null){
+                actions = new Action[jActions.size()];
 
                 for (int c = 0; c < jActions.size(); c++) {
                     String actionString = (String) jActions.get(c);
@@ -198,65 +172,75 @@ public class Main {
                     switch (parts[0]) {
                         case "ADDI":
                             Item item = null;
-                            for (Item testItem : items) {
-                                if (testItem.name.equals(parts[1])) {
+                            for (Item testItem : scene.items) {
+                                if (testItem.id.equals(parts[1])) {
                                     item = testItem;
+                                    break;
                                 }
                             }
                             action = new AddItemAction(item);
                             break;
                         case "RMI":
                             item = null;
-                            for (Item testItem : items) {
-                                if (testItem.name.equals(parts[1])) {
+                            for (Item testItem : scene.items) {
+                                if (testItem.id.equals(parts[1])) {
                                     item = testItem;
+                                    break;
                                 }
                             }
                             action = new RemoveItemAction(item);
+                            break;
+                        case "F":
+                            Entity entity = null;
+                            for (Entity testentity : scene.entities) {
+                                if (testentity.id.equals((String) jObject.get("Id"))) {
+                                    entity = testentity;
+                                    break;
+                                }
+                            }
+                            action = new SetFlagAction(parts[1], entity);
                             break;
                     }
 
                     actions[c] = action;
                 }
-
-                if (text == null) {
-                    interaction = new Interaction(actions);
-                } else {
-                    interaction = new Interaction(text, actions);
-                }
             }
 
+            Interaction interaction = new Interaction(text, actions, loadContitions(jObject, jInteraction, scene));
+
             JSONArray jObjects = (JSONArray) jInteraction.get("Objects");
+            interaction.objects = new Object[jObjects.size()];
 
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < jObjects.size(); i++) {
                 boolean stop = false;
-                String name = (String) jObjects.get(i);
+                String id = (String) jObjects.get(i);
 
-                for (Item item : items) {
-                    if (item.name.equals(name)) {
+                for (Item item : scene.items) {
+                    if (item.id.equals(id)) {
                         item.interactions.add(interaction);
+                        interaction.objects[i] = item;
                         stop = true;
                         break;
                     }
                 }
                 if (stop) break;
 
-                for (Entity entity : entities) {
-                    if (entity.name.equals(name)) {
+                for (Entity entity : scene.entities) {
+                    if (entity.id.equals(id)) {
                         entity.interactions.add(interaction);
+                        interaction.objects[i] = entity;
                         break;
                     }
                 }
             }
         }
     }
-
-    private void addPosLink(String name, Position position){
+    private void addPosLink(String id, Position position){
         boolean stop = false;
 
         for (Scene testScene : scenes) {
             for (Position pos : testScene.positions) {
-                if (pos.name.equals(name)) {
+                if (pos.id.equals(id)) {
                     position.positionLinks.add(pos);
                     stop = true;
                     break;
@@ -265,35 +249,292 @@ public class Main {
             if (stop) break;
         }
     }
+    private GameCondition[] loadContitions(JSONObject jRoot, JSONObject jObject, Scene scene){
+        JSONArray jConditions = (JSONArray) jObject.get("Conditions");
+        GameCondition[] conditions = null;
+        if (jConditions != null) {
+            conditions = new GameCondition[jConditions.size()];
+            for (int c = 0; c < jConditions.size(); c++) {
+                String conditionString = (String) jConditions.get(c);
+                String[] parts = conditionString.split(":");
+
+                GameCondition condition = null;
+
+                switch (parts[0]) {
+                    case "HF":
+                        Entity entity = null;
+                        for (Entity testentity : scene.entities) {
+                            if (testentity.id.equals((String) jRoot.get("Id"))) {
+                                entity = testentity;
+                                break;
+                            }
+                        }
+                        condition = new HasFlagGameCondition(entity, parts[1]);
+                        break;
+                    case "NF":
+                        entity = null;
+                        for (Entity testentity : scene.entities) {
+                            if (testentity.id.equals((String) jRoot.get("Id"))) {
+                                entity = testentity;
+                                break;
+                            }
+                        }
+                        condition = new HasNotFlagGameCondition(entity, parts[1]);
+                        break;
+                    case "HI":
+                        Item item = null;
+                        for (Item testItem : scene.items) {
+                            if (testItem.id.equals(parts[1])) {
+                                item = testItem;
+                                break;
+                            }
+                        }
+                        condition = new HasItemGameCondition(item);
+                        break;
+                    case "NI":
+                        item = null;
+                        for (Item testItem : scene.items) {
+                            if (testItem.id.equals(parts[1])) {
+                                item = testItem;
+                                break;
+                            }
+                        }
+                        condition = new HasNotItemGameCondition(item);
+                        break;
+                }
+
+                conditions[c] = condition;
+            }
+
+        }
+        return conditions;
+    }
+
+    boolean running;
+    private void run(){
+
+        observe(currentPosition.observationTexts);
+
+        while (running){
+            String input = Utility.getInput();
+            String[] inputParts = input.split(" ");
+
+            switch (inputParts[0]){
+                case "Beobachte":
+                    Object object = findObject(inputParts[1]);
+
+                    if (object == null){
+                        Utility.print("Kein Object.");
+                    }
+                    else if (object.getClass().equals(Item.class)){
+                        observe(((Item) object).observationTexts);
+                    }
+                    else if (object.getClass().equals(Entity.class)){
+                        observe(((Entity) object).observationTexts);
+                    }
+                    else if (object.getClass().equals(Position.class)){
+                        observe(((Position) object).observationTexts);
+                    }else {
+                        Utility.print("Kein Object.");
+                    }
+
+                    break;
+
+                case "Benutze":
+                    object = findObject(inputParts[1]);
+                    Object object2 = null;
+                    if (inputParts.length > 2){
+                        object2 = findObject(inputParts[2]);
+                    }
+
+                    if (object == null){
+                        Utility.print("Kein Object.");
+                    }
+                    else if (object.getClass().equals(Item.class)){
+                        Item item = (Item) object;
+                        for (Interaction interaction : item.interactions) {
+                            if(object2 == null && interaction.objects.length == 1){
+                                interact(interaction);
+                            }
+                            else if(interaction.objects.length == 2){
+                                if(interaction.objects[0].getClass().equals(object) && interaction.objects[1].getClass().equals(object2)||
+                                        interaction.objects[1].getClass().equals(object) && interaction.objects[0].getClass().equals(object2)){
+                                    interact(interaction);
+                                }
+                            }
+
+                        }
+                    }
+                    else if (object.getClass().equals(Entity.class)){
+                        Entity entity = (Entity) object;
+                        for (Interaction interaction : entity.interactions) {
+                            if(object2 == null && interaction.objects.length == 1){
+                                interact(interaction);
+                            }
+                            else if(interaction.objects.length == 2){
+                                if(interaction.objects[0].getClass().equals(object) && interaction.objects[1].getClass().equals(object2)||
+                                        interaction.objects[1].getClass().equals(object) && interaction.objects[0].getClass().equals(object2)){
+                                    interact(interaction);
+                                }
+                            }
+
+                        }
+                    }
+                    else {
+                        Utility.print("Kein Object.");
+                    }
+                    break;
+
+                case "Gehe":
+
+                    object = findObject(inputParts[1]);
+
+                    if (object == null){
+                        Utility.print("Kein Ort.");
+                    }
+                    else if (object.getClass().equals(Position.class)){
+                        Position position= (Position) object;
+                        for (Position posLink : currentPosition.positionLinks) {
+                            if(posLink == position){
+                                currentPosition = position;
+                                observe(position.observationTexts);
+                                break;
+                            }
+                        }
+                    }else {
+                        Utility.print("Kein Ort.");
+                    }
+
+                    break;
+                case "Umschauen":
+                    Utility.print("Hier bin ich: " + currentPosition.name);
+
+                    if(currentPosition.entities.length != 0) {
+                        Utility.print("---Objekte---");
+                        for (Entity enity : currentPosition.entities) {
+                            Utility.print(enity.name);
+                        }
+                    }
+                    if(!currentPosition.positionLinks.isEmpty()){
+                        Utility.print("---Wege---");
+                        for (Position position : currentPosition.positionLinks) {
+                            Utility.print(position.name);
+                        }
+                    }
+                    if(!currentCharacter.items.isEmpty()){
+                        Utility.print("---Inventar---");
+                        for (Item item : currentCharacter.items) {
+                            Utility.print(item.name);
+                        }
+                    }
+                    break;
+                case "Hilfe":
+                    Utility.print("Befele sind:\nBeobachte <Objekt oder Ort> \nBenutze <Objekt> \nBenutze <Objekt> <Objekt> \nGehe <Ort> \nUmschauen \nHilfe");
+                    break;
+                default:
+                    Utility.print("Kein Befehls Wort.");
+                    break;
+            }
+        }
+    }
+
+    private Object findObject(String name){
+        for (Item item : currentCharacter.items) {
+            if (item.name.equals(name)){
+                return item;
+            }
+        }
+        for (Entity entity : currentScene.entities) {
+            if (entity.name.equals(name)){
+                return entity;
+            }
+        }
+        for (Position position : currentScene.positions) {
+            if (position.name.equals(name)){
+                return position;
+            }
+        }
+        return null;
+    }
+
+    private void observe(ObservationText[] observationTexts){
+        for (ObservationText observationText : observationTexts){
+
+            boolean print = true;
+            if(observationText.gameConditions != null){
+                for (GameCondition condition : observationText.gameConditions) {
+                    if (!condition.isTrue()) print = false;
+                }
+            }
+
+            if(print){
+                Utility.print(observationText.text);
+            }
+        }
+    }
+
+    private void interact(Interaction interaction){
+        boolean perform = true;
+        if(interaction.conditions != null){
+            for (GameCondition condition : interaction.conditions) {
+                if (!condition.isTrue()) perform = false;
+            }
+        }
+
+        if(perform){
+            if(interaction.text != null){
+                Utility.print(interaction.text);
+            }
+            if(interaction.actions != null){
+                for (Action action : interaction.actions) {
+                    action.perform();
+                }
+            }
+        }
+
+
+    }
+
+
 }
 
 class Character {
+    String id;
     String name;
     ArrayList<Item> items;
 
-    public Character(String name) {
+    public Character(String id, String name) {
+        this.id = id;
         this.name = name;
         this.items = new ArrayList<>();
     }
 }
 
 class Scene{
+    String id;
     String name;
     Position[] positions;
+    Entity[] entities;
+    Item[] items;
 
-    public Scene(String name, Position[] positions) {
+    public Scene(String id, String name, Position[] positions, Entity[] entities, Item[] items) {
+        this.id = id;
         this.name = name;
         this.positions = positions;
+        this.entities = entities;
+        this.items = items;
     }
 }
 
 class Position{
+    String id;
     String name;
     Entity[] entities;
     ObservationText[] observationTexts;
     ArrayList<Position> positionLinks;
 
-    public Position(String name, Entity[] entities) {
+    public Position(String id, String name, Entity[] entities) {
+        this.id = id;
         this.name = name;
         this.entities = entities;
         this.positionLinks = new ArrayList<>();
@@ -301,11 +542,14 @@ class Position{
 }
 
 class Entity {
+    String id;
     String name;
+    String flag;
     ObservationText[] observationTexts;
     ArrayList<Interaction> interactions;
 
-    public Entity(String name) {
+    public Entity(String id, String name) {
+        this.id = id;
         this.name = name;
         this.interactions = new ArrayList<>();
     }
@@ -313,30 +557,57 @@ class Entity {
 
 class ObservationText {
     String text;
-    ObservationCondition[] conditions;
+    GameCondition[] gameConditions;
 
-    public ObservationText(String text, ObservationCondition[] conditions) {
+    public ObservationText(String text, GameCondition[] gameConditions) {
         this.text = text;
-        this.conditions = conditions;
+        this.gameConditions = gameConditions;
     }
     public ObservationText(String text) {
         this.text = text;
-        this.conditions = null;
+        this.gameConditions = null;
     }
 }
 
-class ObservationCondition {
+class GameCondition {
 
     public boolean isTrue(){
         return true;
     }
 }
 
-class HasItemCondition extends ObservationCondition {
+class HasFlagGameCondition extends GameCondition {
+    Entity entity;
+    String flag;
+
+    public HasFlagGameCondition(Entity entity, String flag) {
+        this.entity = entity;
+        this.flag = flag;
+    }
+
+    public boolean isTrue(){
+        return entity.flag.equals(flag);
+    }
+}
+class HasNotFlagGameCondition extends GameCondition {
+    Entity entity;
+    String flag;
+
+    public HasNotFlagGameCondition(Entity entity, String flag) {
+        this.entity = entity;
+        this.flag = flag;
+    }
+
+    public boolean isTrue(){
+        return entity.flag == null || !entity.flag.equals(flag);
+    }
+}
+
+class HasItemGameCondition extends GameCondition {
 
     Item item;
 
-    public HasItemCondition(Item item) {
+    public HasItemGameCondition(Item item) {
         this.item = item;
     }
 
@@ -344,13 +615,27 @@ class HasItemCondition extends ObservationCondition {
         return Main.ins.currentCharacter.items.contains(item);
     }
 }
+class HasNotItemGameCondition extends GameCondition {
+
+    Item item;
+
+    public HasNotItemGameCondition(Item item) {
+        this.item = item;
+    }
+
+    public boolean isTrue(){
+        return !Main.ins.currentCharacter.items.contains(item);
+    }
+}
 
 class Item{
+    String id;
     String name;
     ObservationText[] observationTexts;
     ArrayList<Interaction> interactions;
 
-    public Item(String name) {
+    public Item(String id, String name) {
+        this.id = id;
         this.name = name;
         this.interactions = new ArrayList<>();
     }
@@ -359,20 +644,13 @@ class Item{
 class Interaction{
     String text;
     Action[] actions;
+    GameCondition[] conditions;
+    Object[] objects;
 
-    public Interaction(String text) {
-        this.text = text;
-        this.actions = null;
-    }
-
-    public Interaction(Action[] actions) {
-        this.text = null;
-        this.actions = actions;
-    }
-
-    public Interaction(String text, Action[] actions) {
+    public Interaction(String text, Action[] actions, GameCondition[] conditions) {
         this.text = text;
         this.actions = actions;
+        this.conditions = conditions;
     }
 }
 
@@ -388,8 +666,8 @@ class AddItemAction extends Action{
     }
 
     public void perform(){
-
         Main.ins.currentCharacter.items.add(item);
+        Utility.print(item.name +" Zum Inventar hinzugefügt.");
     }
 }
 
@@ -408,5 +686,20 @@ class RemoveItemAction extends Action{
             }
         }
         Main.ins.currentCharacter.items.removeAll(removeItems);
+    }
+}
+
+class SetFlagAction extends Action{
+
+    String flag;
+    Entity entity;
+
+    public SetFlagAction(String flag, Entity entity) {
+        this.flag = flag;
+        this.entity = entity;
+    }
+
+    public void perform(){
+        entity.flag = flag;
     }
 }

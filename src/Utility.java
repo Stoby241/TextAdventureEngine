@@ -11,25 +11,9 @@ import org.json.simple.parser.ParseException;
 
 public class Utility {
 
-    public static ArrayList<String> LoadFile(String localPath){
-        ArrayList<String> lines = new ArrayList<>();
-        String path = System.getProperty("user.dir") + localPath;
-        try {
-            File file = new File(path);
-            Scanner scanner = new Scanner(file);
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-               lines.add(line);
-            }
-            scanner.close();
-        } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-        }
-        return lines;
-    }
+    static Scanner in = new Scanner(System.in);
 
-    public static JSONObject LoadJson(String localPath)  {
+    public static JSONObject loadJson(String localPath)  {
         JSONObject jo = null;
         String path = System.getProperty("user.dir") + localPath;
         try {
@@ -39,4 +23,13 @@ public class Utility {
         }
         return jo;
     }
+
+    public static void print(String msg){
+        System.out.println(msg);
+    }
+
+    public static String getInput(){
+        return in.nextLine();
+    }
+
 }

@@ -1,83 +1,198 @@
 {
 
-  "StartCharacter" : "Rufus",
+  "StartCharacter" : "rufus",
+  "StartScene" : "zelle",
+  "StartPosition" : "mitte der zelle",
 
   "Characters":
   [
     {
+      "Id": "rufus",
       "Name": "Rufus"
-    }
-  ],
-
-  "Entities":
-  [
-    {
-      "Name": "Enity1",
-      "ObservationTexts":
-      [
-        {
-          "Text" : "Moin",
-          "Conditions":
-          [
-            {
-              "Name": "HasItem",
-              "ItemName" : "Item1"
-            }
-          ]
-        }
-      ]
-    }
-  ],
-
-  "Items":
-  [
-    {
-      "Name": "Item1",
-      "ObservationTexts":
-      [
-        {
-          "Text" : "Moin"
-        }
-      ],
-      "Interactions":
-      [
-        {
-          "Objects": ["Item1", "Item2"],
-          "Text": "Ha das geht.",
-          "Actions": ["ADDI:Item2", "RMI:Item2"]
-        }
-      ]
-    },
-    {
-      "Name": "Item2"
     }
   ],
 
   "Scenes":
   [
     {
-      "Name": "Scene1",
+      "Id": "zelle",
+      "Name": "Zelle",
       "Positions":
       [
         {
-          "Name" : "Pos1",
-          "Entities": ["Enity1"],
+          "Id": "mitte der zelle",
+          "Name" : "Zelle",
+          "Entities": ["fenster", "bed", "tür", "lampe", "tisch", "stuhl", "klo", "waschbecken"],
           "ObservationTexts":
           [
             {
-              "Text" : "LOL"
+              "Text" : "Ich sitze jetzt schon seit 3 Wochen in dieser Zelle der Psychiatrie.\nWird zeit das ich hier raus komme."
             }
           ],
-          "PositionLinks": ["Pos2"]
-        },
+          "PositionLinks": []
+        }
+      ],
+      "Entities":
+      [
         {
-          "Name" : "Pos2",
-          "Entities": [],
+          "Id": "fenster",
+          "Name": "Fenster",
           "ObservationTexts":
           [
-
+            {
+              "Text" : "Ach die welt da daußen immer ein so schöner Anblick... \nNur doff das man von diesem Fenster die nur 2 Meter enfernte Wand des Nachbargebäudes sieht."
+            }
           ],
-          "PositionLinks": ["Pos1"]
+          "Interactions":
+          [
+            {
+              "Objects": ["fenster"],
+              "Text": "Es währe ja keine Zelle wenn das aufgehen würde."
+            }
+          ]
+        },
+        {
+          "Id": "bed",
+          "Name": "Bed",
+          "ObservationTexts":
+          [
+            {
+              "Text" : "Ein altes dreckiges Bed mit einer noch älteren Matrze drin.\nAuf der Matratze sind unzählige Flecken. Ein paar leuchten sogar im Dunkeln.\nIch will gar nicht wissen was die verursacht hat."
+            }
+          ],
+          "Interactions":
+          [
+            {
+              "Objects": ["bed"],
+              "Text": "Es ist morgens. Ich will nicht schafen."
+            }
+          ]
+        },
+        {
+          "Id": "tür",
+          "Name": "Tür",
+          "ObservationTexts":
+          [
+            {
+              "Text" : "Eine robuste Stahltür."
+            }
+          ],
+          "Interactions":
+          [
+            {
+              "Objects": ["tür"],
+              "Text": "Die ist verschloßen."
+            }
+          ]
+        },
+        {
+          "Id": "lampe",
+          "Name": "Lampe",
+          "ObservationTexts":
+          [
+            {
+              "Text" : "Die einzige Lampe im Zimmer. Heute geht sie mal. \nDas kommt nicht oft vor."
+            }
+          ],
+          "Interactions":
+          [
+            {
+              "Objects": ["lampe"],
+              "Text": "Mal sehn ob ich die Glübirne raus schrauben kann... \nAUA! die ist zu heiß."
+            }
+          ]
+        },
+        {
+          "Id": "tisch",
+          "Name": "Tisch",
+          "ObservationTexts":
+          [
+            {
+              "Text" : "Ein plastik garten Tisch wie deine Oma einen hat."
+            }
+          ],
+          "Interactions":
+          [
+            {
+              "Objects": ["tisch"],
+              "Text": "Der ist zu nichts gut außer doff auszusehen."
+            }
+          ]
+        },
+        {
+          "Id": "stuhl",
+          "Name": "Stuhl",
+          "ObservationTexts":
+          [
+            {
+              "Conditions": ["NF:stuhlbein ab"],
+              "Text" : "Ein klapriger Holzstuhl. Es ist ein wunder das der mich noch hält."
+            }
+          ],
+          "Interactions":
+          [
+            {
+              "Conditions": ["NF:stuhlbein ab"],
+              "Objects": ["stuhl"],
+              "Text": "Guck mal da. Ein Stuhlbein ist locker mal sehn ob ich es abschrauben kann... \nGeschaft!",
+              "Actions": ["ADDI:stuhlbein", "F:stuhlbein ab"]
+            }
+          ]
+        },
+        {
+          "Id": "klo",
+          "Name": "Klo",
+          "ObservationTexts":
+          [
+            {
+              "Text" : "Ich glaube im Klo leben Ratten. \nEines Nachsts habe ich mal eine gehört."
+            }
+          ],
+          "Interactions":
+          [
+            {
+              "Objects": ["klo"],
+              "Text": "Ich muss gerade nicht."
+            }
+          ]
+        },
+        {
+          "Id": "waschbecken",
+          "Name": "Waschbecken",
+          "ObservationTexts":
+          [
+            {
+              "Text" : "Ein spackiges Waschbecken."
+            }
+          ],
+          "Interactions":
+          [
+            {
+              "Objects": ["waschbecken"],
+              "Text": "Das Wasser ist so dreckig. Ich werde sauberer wenn ich mich nicht wasche."
+            }
+          ]
+        }
+      ],
+      "Items":
+      [
+        {
+          "Id": "stuhlbein",
+          "Name": "Stuhlbein",
+          "ObservationTexts":
+          [
+            {
+              "Text" : "Ein hölzernes Stuhlbein."
+            }
+          ],
+          "Interactions":
+          [
+            {
+              "Objects": ["stuhlbein"],
+              "Text": "Das ist ein Stuhlbein.",
+              "Actions": ["ADDI:Item2", "RMI:Item2"]
+            }
+          ]
         }
       ]
     }
