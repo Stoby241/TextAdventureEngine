@@ -60,14 +60,24 @@
       "Positions":
       [
         {
-          "Name" : "Position1",
-          "Enities": ["Enity1"],
+          "Name" : "Pos1",
+          "Entities": ["Enity1"],
           "ObservationTexts":
           [
             {
               "Text" : "LOL"
             }
-          ]
+          ],
+          "PositionLinks": ["Pos2"]
+        },
+        {
+          "Name" : "Pos2",
+          "Entities": [],
+          "ObservationTexts":
+          [
+
+          ],
+          "PositionLinks": ["Pos1"]
         }
       ]
     }

@@ -1,7 +1,6 @@
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 public class Main {
@@ -18,26 +17,25 @@ public class Main {
         LoadGame();
     }
 
-    Charcter[] charcters;
-    Charcter currentCharcter;
+    Character currentCharacter;
+    public Character getCurrentCharacter() {
+        return currentCharacter;
+    }
 
+    Character[] characters;
     Entity[] entities;
     Item[] items;
     Scene[] scenes;
-
-    public Charcter getCurrentCharcter() {
-        return currentCharcter;
-    }
 
     public void LoadGame(){
         JSONObject jo = Utility.LoadJson("/resources/SaveGame.json");
 
         JSONArray jCharacters = (JSONArray) jo.get("Characters");
-        charcters = new Charcter[jCharacters.size()];
+        characters = new Character[jCharacters.size()];
         for (int i = 0; i < jCharacters.size(); i++){
             JSONObject jCharacter = (JSONObject) jCharacters.get(i);
-            Charcter charcter = new Charcter((String) jCharacter.get("Name"));
-            charcters[i] = charcter;
+            Character character = new Character((String) jCharacter.get("Name"));
+            characters[i] = character;
         }
 
         JSONArray jEntities = (JSONArray) jo.get("Entities");
@@ -69,12 +67,12 @@ public class Main {
 
                 JSONObject jPosition = (JSONObject) jPositions.get(j);
 
-                JSONArray jEntitiesNames = (JSONArray) jPosition.get("Enities");
+                JSONArray jEntitiesNames = (JSONArray) jPosition.get("Entities");
                 Entity[] posEntities = new Entity[jEntities.size()];
 
                 for (int k = 0; k < jEntitiesNames.size(); k++){
                     for (Entity entity :entities) {
-                        if(entity.name.equals((String) jEntitiesNames.get(k))){
+                        if(entity.name.equals(jEntitiesNames.get(k))){
                             posEntities[k] = entity;
                             break;
                         }
@@ -90,9 +88,9 @@ public class Main {
             scenes[i] = scene;
         }
 
-        for (Charcter character : charcters) {
-            if(character.name.equals((String) jo.get("StartCharacter"))){
-                currentCharcter = character;
+        for (Character character : characters) {
+            if(character.name.equals(jo.get("StartCharacter"))){
+                currentCharacter = character;
             }
         }
 
@@ -106,6 +104,25 @@ public class Main {
             JSONObject jItem = (JSONObject) jItems.get(i);
             items[i].observationTexts = loadObservationTexts(jItem);
             loadInteractions(jItem);
+        }
+
+        for (int i = 0; i < jScenes.size(); i++){
+
+            JSONObject jScene = (JSONObject) jScenes.get(i);
+            Scene scene = scenes[i];
+            JSONArray jPositions = (JSONArray) jScene.get("Positions");
+
+            for (int j = 0; j < jPositions.size(); j++){
+
+                JSONObject jPosition = (JSONObject) jPositions.get(j);
+                Position position = scene.positions[j];
+                JSONArray jLinks = (JSONArray) jPosition.get("PositionLinks");
+
+                for (Object jLink : jLinks) {
+                    String name = (String) jLink;
+                    addPosLink(name, position);
+                }
+            }
         }
 
     }
@@ -131,15 +148,15 @@ public class Main {
                 ObservationCondition[] observationConditions = new ObservationCondition[jConditions.size()];
 
                 for (int c = 0; c < jConditions.size(); c++) {
-                    JSONObject jContition = (JSONObject) jConditions.get(c);
+                    JSONObject jCondition = (JSONObject) jConditions.get(c);
 
                     ObservationCondition observationCondition = null;
 
-                    String name = (String) jContition.get("Name");
+                    String name = (String) jCondition.get("Name");
                     switch (name){
                         case"HasItem":
                             for (Item item : items) {
-                                if(item.name.equals((String) jContition.get("ItemName"))){
+                                if(item.name.equals(jCondition.get("ItemName"))){
                                     observationCondition = new HasItemCondition(item);
                                     break;
                                 }
@@ -160,17 +177,16 @@ public class Main {
         JSONArray jInteractions = (JSONArray) jObject.get("Interactions");
         if(jInteractions == null) return;
 
-        for (int t = 0; t < jInteractions.size(); t++){
-            JSONObject jInteraction = (JSONObject) jInteractions.get(t);
+        for (Object o : jInteractions) {
+            JSONObject jInteraction = (JSONObject) o;
 
             String text = (String) jInteraction.get("Text");
 
             JSONArray jActions = (JSONArray) jInteraction.get("Actions");
             Interaction interaction;
-            if(jActions == null){
+            if (jActions == null) {
                 interaction = new Interaction(text);
-            }
-            else{
+            } else {
                 Action[] actions = new Action[jActions.size()];
 
                 for (int c = 0; c < jActions.size(); c++) {
@@ -179,20 +195,20 @@ public class Main {
 
                     Action action = null;
 
-                    switch (parts[0]){
-                        case"ADDI":
+                    switch (parts[0]) {
+                        case "ADDI":
                             Item item = null;
-                            for (Item testItem: items) {
-                                if(testItem.name.equals(parts[1])){
+                            for (Item testItem : items) {
+                                if (testItem.name.equals(parts[1])) {
                                     item = testItem;
                                 }
                             }
                             action = new AddItemAction(item);
                             break;
-                        case"RMI":
+                        case "RMI":
                             item = null;
-                            for (Item testItem: items) {
-                                if(testItem.name.equals(parts[1])){
+                            for (Item testItem : items) {
+                                if (testItem.name.equals(parts[1])) {
                                     item = testItem;
                                 }
                             }
@@ -203,22 +219,21 @@ public class Main {
                     actions[c] = action;
                 }
 
-                if(text == null){
+                if (text == null) {
                     interaction = new Interaction(actions);
-                }
-                else {
+                } else {
                     interaction = new Interaction(text, actions);
                 }
             }
 
             JSONArray jObjects = (JSONArray) jInteraction.get("Objects");
 
-            for (int i = 0; i < 2; i++){
+            for (int i = 0; i < 2; i++) {
                 boolean stop = false;
                 String name = (String) jObjects.get(i);
 
-                for (Item item : items){
-                    if(item.name.equals(name)){
+                for (Item item : items) {
+                    if (item.name.equals(name)) {
                         item.interactions.add(interaction);
                         stop = true;
                         break;
@@ -226,8 +241,8 @@ public class Main {
                 }
                 if (stop) break;
 
-                for (Entity entity : entities){
-                    if(entity.name.equals(name)){
+                for (Entity entity : entities) {
+                    if (entity.name.equals(name)) {
                         entity.interactions.add(interaction);
                         break;
                     }
@@ -235,13 +250,28 @@ public class Main {
             }
         }
     }
+
+    private void addPosLink(String name, Position position){
+        boolean stop = false;
+
+        for (Scene testScene : scenes) {
+            for (Position pos : testScene.positions) {
+                if (pos.name.equals(name)) {
+                    position.positionLinks.add(pos);
+                    stop = true;
+                    break;
+                }
+            }
+            if (stop) break;
+        }
+    }
 }
 
-class Charcter{
+class Character {
     String name;
     ArrayList<Item> items;
 
-    public Charcter(String name) {
+    public Character(String name) {
         this.name = name;
         this.items = new ArrayList<>();
     }
@@ -261,10 +291,12 @@ class Position{
     String name;
     Entity[] entities;
     ObservationText[] observationTexts;
+    ArrayList<Position> positionLinks;
 
     public Position(String name, Entity[] entities) {
         this.name = name;
         this.entities = entities;
+        this.positionLinks = new ArrayList<>();
     }
 }
 
@@ -309,10 +341,9 @@ class HasItemCondition extends ObservationCondition {
     }
 
     public boolean isTrue(){
-        return Main.ins.currentCharcter.items.contains(item);
+        return Main.ins.currentCharacter.items.contains(item);
     }
 }
-
 
 class Item{
     String name;
@@ -358,7 +389,7 @@ class AddItemAction extends Action{
 
     public void perform(){
 
-        Main.ins.currentCharcter.items.add(item);
+        Main.ins.currentCharacter.items.add(item);
     }
 }
 
@@ -371,11 +402,11 @@ class RemoveItemAction extends Action{
 
     public void perform(){
         ArrayList<Item> removeItems = new ArrayList<>();
-        for (Item testItem : Main.ins.currentCharcter.items) {
+        for (Item testItem : Main.ins.currentCharacter.items) {
             if(item == testItem){
                 removeItems.add(testItem);
             }
         }
-        Main.ins.currentCharcter.items.removeAll(removeItems);
+        Main.ins.currentCharacter.items.removeAll(removeItems);
     }
 }
