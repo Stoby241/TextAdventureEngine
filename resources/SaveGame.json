@@ -20,7 +20,8 @@
           "Conditions":
           [
             {
-              "Name": "Base"
+              "Name": "HasItem",
+              "ItemName" : "Item1"
             }
           ]
         }
@@ -35,13 +36,7 @@
       "ObservationTexts":
       [
         {
-          "Text" : "Moin",
-          "Conditions":
-          [
-            {
-              "Name": "Base"
-            }
-          ]
+          "Text" : "Moin"
         }
       ],
       "Interactions":
@@ -54,23 +49,7 @@
       ]
     },
     {
-      "Name": "Item2",
-      "ObservationTexts":
-      [
-        {
-          "Text" : "Moin",
-          "Conditions":
-          [
-            {
-              "Name": "Base"
-            }
-          ]
-        }
-      ],
-      "Interactions":
-      [
-
-      ]
+      "Name": "Item2"
     }
   ],
 
@@ -86,13 +65,7 @@
           "ObservationTexts":
           [
             {
-              "Text" : "LOL",
-              "Conditions":
-              [
-                {
-                  "Name": "Base"
-                }
-              ]
+              "Text" : "LOL"
             }
           ]
         }

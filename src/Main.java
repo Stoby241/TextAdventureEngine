@@ -44,15 +44,15 @@ public class Main {
         entities = new Entity[jEntities.size()];
         for (int i = 0; i < jEntities.size(); i++){
             JSONObject jEntity = (JSONObject) jEntities.get(i);
-            Entity entity = new Entity((String) jEntity.get("Name"), loadObservationTexts(jEntity));
+            Entity entity = new Entity((String) jEntity.get("Name"));
             entities[i] = entity;
         }
 
-        JSONArray jItems = (JSONArray) jo.get("Entities");
+        JSONArray jItems = (JSONArray) jo.get("Items");
         items = new Item[jItems.size()];
         for (int i = 0; i < jItems.size(); i++){
             JSONObject jItem = (JSONObject) jItems.get(i);
-            Item item = new Item((String) jItem.get("Name"), loadObservationTexts(jItem));
+            Item item = new Item((String) jItem.get("Name"));
             items[i] = item;
         }
 
@@ -81,7 +81,8 @@ public class Main {
                     }
                 }
 
-                Position position = new Position((String) jPosition.get("Name"), posEntities, loadObservationTexts(jPosition));
+                Position position = new Position((String) jPosition.get("Name"), posEntities);
+                position.observationTexts = loadObservationTexts(jPosition);
                 positions[j] = position;
             }
 
@@ -94,43 +95,62 @@ public class Main {
                 currentCharcter = character;
             }
         }
+
+        for (int i = 0; i < jEntities.size(); i++){
+            JSONObject jEntity = (JSONObject) jEntities.get(i);
+            entities[i].observationTexts = loadObservationTexts(jEntity);
+            loadInteractions(jEntity);
+        }
+
+        for (int i = 0; i < jItems.size(); i++){
+            JSONObject jItem = (JSONObject) jItems.get(i);
+            items[i].observationTexts = loadObservationTexts(jItem);
+            loadInteractions(jItem);
+        }
+
     }
 
     private ObservationText[] loadObservationTexts(JSONObject jObject){
 
         JSONArray jObservationTexts = (JSONArray) jObject.get("ObservationTexts");
+        if(jObservationTexts == null) return new ObservationText[0];
+
         ObservationText[] observationTexts = new ObservationText[jObservationTexts.size()];
 
         for (int t = 0; t < jObservationTexts.size(); t++){
             JSONObject jObservationText = (JSONObject) jObservationTexts.get(t);
 
             JSONArray jConditions = (JSONArray) jObservationText.get("Conditions");
-            ObservationCondition[] observationConditions = new ObservationCondition[jConditions.size()];
 
-            for (int c = 0; c < jConditions.size(); c++) {
-                JSONObject jContition = (JSONObject) jConditions.get(c);
+            ObservationText observationText;
+            if(jConditions == null){
+                observationText = new ObservationText((String) jObservationText.get("Text"));
+            }
+            else{
 
-                ObservationCondition observationCondition = null;
+                ObservationCondition[] observationConditions = new ObservationCondition[jConditions.size()];
 
-                String name = (String) jContition.get("Name");
-                switch (name){
-                    case"Base":
-                        observationCondition = new ObservationCondition();
-                        break;
-                    case"HasItem":
-                        for (Item item : items) {
-                            if(item.name.equals((String) jContition.get("ItemName"))){
-                                observationCondition = new HasItemCondition(item);
-                                break;
+                for (int c = 0; c < jConditions.size(); c++) {
+                    JSONObject jContition = (JSONObject) jConditions.get(c);
+
+                    ObservationCondition observationCondition = null;
+
+                    String name = (String) jContition.get("Name");
+                    switch (name){
+                        case"HasItem":
+                            for (Item item : items) {
+                                if(item.name.equals((String) jContition.get("ItemName"))){
+                                    observationCondition = new HasItemCondition(item);
+                                    break;
+                                }
                             }
-                        }
-                        break;
+                            break;
+                    }
+                    observationConditions[c] = observationCondition;
                 }
-
-                observationConditions[c] = observationCondition;
+                observationText = new ObservationText((String) jObservationText.get("Text"), observationConditions);
             }
 
-            ObservationText observationText = new ObservationText((String) jObservationText.get("Text"), observationConditions);
             observationTexts[t] = observationText;
         }
         return observationTexts;
@@ -138,54 +158,78 @@ public class Main {
 
     private void loadInteractions(JSONObject jObject){
         JSONArray jInteractions = (JSONArray) jObject.get("Interactions");
+        if(jInteractions == null) return;
 
         for (int t = 0; t < jInteractions.size(); t++){
             JSONObject jInteraction = (JSONObject) jInteractions.get(t);
 
+            String text = (String) jInteraction.get("Text");
+
             JSONArray jActions = (JSONArray) jInteraction.get("Actions");
-            Action[] actions = new Action[jActions.size()];
-
-            for (int c = 0; c < jActions.size(); c++) {
-                String actionString = (String) jActions.get(c);
-                String[] parts = actionString.split(":");
-
-                Item item = null;
-                for (Item testItem: items) {
-                    if(testItem.name == parts[1]){
-                        item = testItem;
-                    }
-                }
-
-                Action action = null;
-
-                switch (parts[0]){
-                    case"ADDI":
-                        action = new AddItemAction(item);
-                        break;
-                    case"RMI":
-                        action = new RemoveItemAction(item);
-                        break;
-                }
-
-                actions[c] = action;
+            Interaction interaction;
+            if(jActions == null){
+                interaction = new Interaction(text);
             }
+            else{
+                Action[] actions = new Action[jActions.size()];
 
-            Interaction interaction = new Interaction((String) jInteraction.get("Text"), actions);
+                for (int c = 0; c < jActions.size(); c++) {
+                    String actionString = (String) jActions.get(c);
+                    String[] parts = actionString.split(":");
+
+                    Action action = null;
+
+                    switch (parts[0]){
+                        case"ADDI":
+                            Item item = null;
+                            for (Item testItem: items) {
+                                if(testItem.name.equals(parts[1])){
+                                    item = testItem;
+                                }
+                            }
+                            action = new AddItemAction(item);
+                            break;
+                        case"RMI":
+                            item = null;
+                            for (Item testItem: items) {
+                                if(testItem.name.equals(parts[1])){
+                                    item = testItem;
+                                }
+                            }
+                            action = new RemoveItemAction(item);
+                            break;
+                    }
+
+                    actions[c] = action;
+                }
+
+                if(text == null){
+                    interaction = new Interaction(actions);
+                }
+                else {
+                    interaction = new Interaction(text, actions);
+                }
+            }
 
             JSONArray jObjects = (JSONArray) jInteraction.get("Objects");
 
             for (int i = 0; i < 2; i++){
+                boolean stop = false;
                 String name = (String) jObjects.get(i);
 
                 for (Item item : items){
                     if(item.name.equals(name)){
                         item.interactions.add(interaction);
+                        stop = true;
+                        break;
                     }
                 }
+                if (stop) break;
 
                 for (Entity entity : entities){
                     if(entity.name.equals(name)){
                         entity.interactions.add(interaction);
+                        break;
                     }
                 }
             }
@@ -218,10 +262,9 @@ class Position{
     Entity[] entities;
     ObservationText[] observationTexts;
 
-    public Position(String name, Entity[] entities, ObservationText[] observationTexts) {
+    public Position(String name, Entity[] entities) {
         this.name = name;
         this.entities = entities;
-        this.observationTexts = observationTexts;
     }
 }
 
@@ -230,10 +273,9 @@ class Entity {
     ObservationText[] observationTexts;
     ArrayList<Interaction> interactions;
 
-    public Entity(String name, ObservationText[] observationTexts) {
+    public Entity(String name) {
         this.name = name;
-        this.observationTexts = observationTexts;
-
+        this.interactions = new ArrayList<>();
     }
 }
 
@@ -244,6 +286,10 @@ class ObservationText {
     public ObservationText(String text, ObservationCondition[] conditions) {
         this.text = text;
         this.conditions = conditions;
+    }
+    public ObservationText(String text) {
+        this.text = text;
+        this.conditions = null;
     }
 }
 
@@ -267,20 +313,31 @@ class HasItemCondition extends ObservationCondition {
     }
 }
 
+
 class Item{
     String name;
     ObservationText[] observationTexts;
     ArrayList<Interaction> interactions;
 
-    public Item(String name, ObservationText[] observationTexts) {
+    public Item(String name) {
         this.name = name;
-        this.observationTexts = observationTexts;
+        this.interactions = new ArrayList<>();
     }
 }
 
 class Interaction{
     String text;
     Action[] actions;
+
+    public Interaction(String text) {
+        this.text = text;
+        this.actions = null;
+    }
+
+    public Interaction(Action[] actions) {
+        this.text = null;
+        this.actions = actions;
+    }
 
     public Interaction(String text, Action[] actions) {
         this.text = text;
