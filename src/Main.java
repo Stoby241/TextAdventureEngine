@@ -66,12 +66,12 @@ public class Main {
                 JSONObject jPosition = (JSONObject) jPositions.get(j);
 
                 JSONArray jEntityIds = (JSONArray) jPosition.get("Entities");
-                Entity[] posEntities = new Entity[jEntityIds.size()];
+                ArrayList<Entity> posEntities = new ArrayList<>();
 
                 for (int k = 0; k < jEntityIds.size(); k++){
                     for (Entity entity : entities) {
                         if(entity.id.equals(jEntityIds.get(k))){
-                            posEntities[k] = entity;
+                            posEntities.add(entity);
                             break;
                         }
                     }
@@ -198,7 +198,46 @@ public class Main {
                                     break;
                                 }
                             }
-                            action = new SetFlagAction(parts[1], entity);
+                            String flag = "";
+                            if (parts.length > 1){
+                                flag = parts[1];
+                            }
+
+                            action = new SetFlagAction(flag, entity);
+                            break;
+                        case "ADDE":
+                            entity = null;
+                            for (Entity testentity : scene.entities) {
+                                if (testentity.id.equals(parts[1])) {
+                                    entity = testentity;
+                                    break;
+                                }
+                            }
+                            Position position = null;
+                            for (Position testposition : scene.positions) {
+                                if (testposition.id.equals(parts[2])) {
+                                    position = testposition;
+                                    break;
+                                }
+                            }
+                            action = new AddEntityAction(position, entity);
+                            break;
+                        case "RME":
+                            entity = null;
+                            for (Entity testentity : scene.entities) {
+                                if (testentity.id.equals(parts[1])) {
+                                    entity = testentity;
+                                    break;
+                                }
+                            }
+                            position = null;
+                            for (Position testposition : scene.positions) {
+                                if (testposition.id.equals(parts[2])) {
+                                    position = testposition;
+                                    break;
+                                }
+                            }
+                            action = new RemoveEntityAction(position, entity);
                             break;
                     }
 
@@ -223,7 +262,7 @@ public class Main {
                         break;
                     }
                 }
-                if (stop) break;
+                if (stop) continue;
 
                 for (Entity entity : scene.entities) {
                     if (entity.id.equals(id)) {
@@ -321,26 +360,35 @@ public class Main {
 
             switch (inputParts[0]){
                 case "Beobachte":
+                    boolean printedtext = false;
                     Object object = findObject(inputParts[1]);
 
                     if (object == null){
                         Utility.print("Kein Object.");
+                        printedtext = true;
                     }
                     else if (object.getClass().equals(Item.class)){
-                        observe(((Item) object).observationTexts);
+                        printedtext = observe(((Item) object).observationTexts);
                     }
                     else if (object.getClass().equals(Entity.class)){
-                        observe(((Entity) object).observationTexts);
+                        printedtext = observe(((Entity) object).observationTexts);
                     }
                     else if (object.getClass().equals(Position.class)){
-                        observe(((Position) object).observationTexts);
+                        printedtext = observe(((Position) object).observationTexts);
                     }else {
                         Utility.print("Kein Object.");
+                        printedtext = true;
+                    }
+
+                    if(!printedtext){
+                        Utility.print("Hier gibt es nichts zu sehen.");
                     }
 
                     break;
 
                 case "Benutze":
+                    printedtext = false;
+
                     object = findObject(inputParts[1]);
                     Object object2 = null;
                     if (inputParts.length > 2){
@@ -349,40 +397,48 @@ public class Main {
 
                     if (object == null){
                         Utility.print("Kein Object.");
+                        printedtext = true;
                     }
                     else if (object.getClass().equals(Item.class)){
                         Item item = (Item) object;
                         for (Interaction interaction : item.interactions) {
                             if(object2 == null && interaction.objects.length == 1){
-                                interact(interaction);
+                                printedtext = interact(interaction);
+                                if(printedtext) break;
                             }
                             else if(interaction.objects.length == 2){
-                                if(interaction.objects[0].getClass().equals(object) && interaction.objects[1].getClass().equals(object2)||
-                                        interaction.objects[1].getClass().equals(object) && interaction.objects[0].getClass().equals(object2)){
-                                    interact(interaction);
+                                if (object2 != null && (interaction.objects[0].getClass().equals(object.getClass()) && interaction.objects[1].getClass().equals(object2.getClass()) ||
+                                        interaction.objects[1].getClass().equals(object.getClass()) && interaction.objects[0].getClass().equals(object2.getClass()))) {
+                                    printedtext = interact(interaction);
+                                    if (printedtext) break;
                                 }
                             }
-
                         }
                     }
                     else if (object.getClass().equals(Entity.class)){
                         Entity entity = (Entity) object;
                         for (Interaction interaction : entity.interactions) {
                             if(object2 == null && interaction.objects.length == 1){
-                                interact(interaction);
+                                printedtext = interact(interaction);
+                                if(printedtext) break;
                             }
                             else if(interaction.objects.length == 2){
-                                if(interaction.objects[0].getClass().equals(object) && interaction.objects[1].getClass().equals(object2)||
-                                        interaction.objects[1].getClass().equals(object) && interaction.objects[0].getClass().equals(object2)){
-                                    interact(interaction);
+                                if (object2 != null && (interaction.objects[0].getClass().equals(object.getClass()) && interaction.objects[1].getClass().equals(object2.getClass()) ||
+                                        interaction.objects[1].getClass().equals(object.getClass()) && interaction.objects[0].getClass().equals(object2.getClass()))) {
+                                    printedtext = interact(interaction);
+                                    if (printedtext) break;
                                 }
                             }
-
                         }
                     }
                     else {
                         Utility.print("Kein Object.");
+                        printedtext = true;
                     }
+                    if(!printedtext){
+                        Utility.print("Das geht nicht!");
+                    }
+
                     break;
 
                 case "Gehe":
@@ -409,7 +465,7 @@ public class Main {
                 case "Umschauen":
                     Utility.print("Hier bin ich: " + currentPosition.name);
 
-                    if(currentPosition.entities.length != 0) {
+                    if(currentPosition.entities.size() != 0) {
                         Utility.print("---Objekte---");
                         for (Entity enity : currentPosition.entities) {
                             Utility.print(enity.name);
@@ -437,7 +493,6 @@ public class Main {
             }
         }
     }
-
     private Object findObject(String name){
         for (Item item : currentCharacter.items) {
             if (item.name.equals(name)){
@@ -456,8 +511,7 @@ public class Main {
         }
         return null;
     }
-
-    private void observe(ObservationText[] observationTexts){
+    private boolean observe(ObservationText[] observationTexts){
         for (ObservationText observationText : observationTexts){
 
             boolean print = true;
@@ -469,11 +523,12 @@ public class Main {
 
             if(print){
                 Utility.print(observationText.text);
+                return true;
             }
         }
+        return false;
     }
-
-    private void interact(Interaction interaction){
+    private boolean interact(Interaction interaction){
         boolean perform = true;
         if(interaction.conditions != null){
             for (GameCondition condition : interaction.conditions) {
@@ -491,11 +546,8 @@ public class Main {
                 }
             }
         }
-
-
+        return perform;
     }
-
-
 }
 
 class Character {
@@ -529,11 +581,11 @@ class Scene{
 class Position{
     String id;
     String name;
-    Entity[] entities;
+    ArrayList<Entity> entities;
     ObservationText[] observationTexts;
     ArrayList<Position> positionLinks;
 
-    public Position(String id, String name, Entity[] entities) {
+    public Position(String id, String name, ArrayList<Entity> entities) {
         this.id = id;
         this.name = name;
         this.entities = entities;
@@ -686,6 +738,7 @@ class RemoveItemAction extends Action{
             }
         }
         Main.ins.currentCharacter.items.removeAll(removeItems);
+        Utility.print(item.name +" Aus Inventar entfernt.");
     }
 }
 
@@ -701,5 +754,33 @@ class SetFlagAction extends Action{
 
     public void perform(){
         entity.flag = flag;
+    }
+}
+
+class AddEntityAction extends Action{
+    Position position;
+    Entity entity;
+
+    public AddEntityAction(Position position, Entity entity) {
+        this.position = position;
+        this.entity = entity;
+    }
+
+    public void perform(){
+        position.entities.add(entity);
+    }
+}
+
+class RemoveEntityAction extends Action{
+    Position position;
+    Entity entity;
+
+    public RemoveEntityAction(Position position, Entity entity) {
+        this.position = position;
+        this.entity = entity;
+    }
+
+    public void perform(){
+        position.entities.remove(entity);
     }
 }

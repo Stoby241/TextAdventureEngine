@@ -22,11 +22,11 @@
         {
           "Id": "mitte der zelle",
           "Name" : "Zelle",
-          "Entities": ["fenster", "bed", "tür", "lampe", "tisch", "stuhl", "klo", "waschbecken"],
+          "Entities": ["fenster", "bed", "tür", "lampe", "tisch", "stuhl", "klo", "waschbecken", "gummiWand"],
           "ObservationTexts":
           [
             {
-              "Text" : "Ich sitze jetzt schon seit 3 Wochen in dieser Zelle der Psychiatrie.\nWird zeit das ich hier raus komme."
+              "Text" : "Ich sitze jetzt schon seit 3 Wochen in dieser Zelle der Psychiatrie.\nIch halte es hier dirn echt nicht mehr aus. \nWird zeit das ich hier raus komme."
             }
           ],
           "PositionLinks": []
@@ -81,7 +81,7 @@
           [
             {
               "Objects": ["tür"],
-              "Text": "Die ist verschloßen."
+              "Text": "Die ist verschloßen. \nKlopf Klopf jemand da? \nHmm keine Antwort."
             }
           ]
         },
@@ -127,14 +127,35 @@
             {
               "Conditions": ["NF:stuhlbein ab"],
               "Text" : "Ein klapriger Holzstuhl. Es ist ein wunder das der mich noch hält."
+            },
+            {
+              "Conditions": ["HF:stuhlbein ab"],
+              "Text" : "Jetzt ist er ganz kaput."
             }
           ],
           "Interactions":
           [
             {
-              "Conditions": ["NF:stuhlbein ab"],
+              "Conditions": ["NF:stuhlbein ab","NF:stuhlbein dran"],
               "Objects": ["stuhl"],
               "Text": "Guck mal da. Ein Stuhlbein ist locker mal sehn ob ich es abschrauben kann... \nGeschaft!",
+              "Actions": ["ADDI:stuhlbein", "F:stuhlbein ab"]
+            },
+            {
+              "Conditions": ["HF:stuhlbein ab"],
+              "Objects": ["stuhl"],
+              "Text": "Noch ein Bein geht nicht ab die sitzen zu fest."
+            },
+            {
+              "Conditions": ["HF:stuhlbein ab"],
+              "Objects": ["stuhl","stuhlbein"],
+              "Text": "Und wieder ran.",
+              "Actions": ["RMI:stuhlbein", "F:stuhlbein dran"]
+            },
+            {
+              "Conditions": ["HF:stuhlbein dran"],
+              "Objects": ["stuhl"],
+              "Text": "Und wieder ab. \nDas könnte ich den ganzen Tag machen.",
               "Actions": ["ADDI:stuhlbein", "F:stuhlbein ab"]
             }
           ]
@@ -172,6 +193,62 @@
               "Text": "Das Wasser ist so dreckig. Ich werde sauberer wenn ich mich nicht wasche."
             }
           ]
+        },
+        {
+          "Id": "gummiWand",
+          "Name": "Wand",
+          "ObservationTexts":
+          [
+            {
+              "Conditions": ["NF:kapput"],
+              "Text" : "Die wand besteht aus Kissen und Gummi Polstern. Die haben mich ensthaft in eine Gummizelle ein gespert."
+            },
+            {
+              "Conditions": ["HF:kapput"],
+              "Text" : "So gefällt mir das viel besser."
+            }
+          ],
+          "Interactions":
+          [
+            {
+              "Conditions": ["NF:kapput"],
+              "Objects": ["gummiWand"],
+              "Text": "Hier and der einen stelle kommt Luft durch die Ritzen."
+            },
+            {
+              "Conditions": ["NF:kapput"],
+              "Objects": ["stuhlbeinstück","gummiWand"],
+              "Text": "Hmm mal sehen damit kann ich die Kissen zerschneiden. \nWer hätte das gedacht da ist eine Lüftung hinter.",
+              "Actions": ["ADDE:lüftung:mitte der zelle", "RMI:stuhlbeinstück", "F:kapput"]
+            },
+            {
+              "Conditions": ["HF:kapput"],
+              "Objects": ["gummiWand"],
+              "Text" : "So gefällt mir das viel besser."
+            },
+            {
+              "Conditions": ["HF:kapput"],
+              "Objects": ["stuhlbein","gummiWand"],
+              "Text" : "Das ist schon kapput."
+            }
+          ]
+        },
+        {
+          "Id": "lüftung",
+          "Name": "Lüftung",
+          "ObservationTexts":
+          [
+            {
+              "Text" : "Eine große Lüftung mit einem Gitter vor. Das Gitter ist mit Schrauben befestigt."
+            }
+          ],
+          "Interactions":
+          [
+            {
+              "Objects": ["lüftung"],
+              "Text": "Ah schön kalt. \nVirleicht ist das ein Weg raus..."
+            }
+          ]
         }
       ],
       "Items":
@@ -189,8 +266,33 @@
           [
             {
               "Objects": ["stuhlbein"],
-              "Text": "Das ist ein Stuhlbein.",
-              "Actions": ["ADDI:Item2", "RMI:Item2"]
+              "Text": "Das ist ein Stuhlbein. \nWas soll ich mehr dazu sagen? \nJa jetzt gucks du doff da gib nähmlich nichts."
+            },
+            {
+              "Objects": ["stuhlbein","tür"],
+              "Text": "Ich kann den da so doll gegen schlagen wie ich will das hilft doch eh nichts."
+            },
+            {
+              "Objects": ["stuhlbein","bed"],
+              "Text": "Mal sehn wenn ich das Stuhlbein unter einen Bedpfosten klemme... \nTa Da und so wird aus einem zwei. Was auch immer mir das bringt.\nDas war mir eh viel zu groß. Ich behalte nur das kleine.",
+              "Actions": ["ADDI:stuhlbeinstück", "RMI:stuhlbein"]
+            }
+          ]
+        },
+        {
+          "Id": "stuhlbeinstück",
+          "Name": "Stuhlbeinstück",
+          "ObservationTexts":
+          [
+            {
+              "Text" : "Es ist jetzt ganz spitz an einer Stelle."
+            }
+          ],
+          "Interactions":
+          [
+            {
+              "Objects": ["stuhlbeinstück"],
+              "Text": "AUA das tut Weh!"
             }
           ]
         }
