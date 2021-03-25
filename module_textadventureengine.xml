@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="module_textadventureengine" default="compile.module.textadventureengine">
+  <dirname property="module.textadventureengine.basedir" file="${ant.file.module_textadventureengine}"/>
+  
+  <property name="module.jdk.home.textadventureengine" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.textadventureengine" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.textadventureengine" value="${project.jdk.classpath}"/>
+  
+  <property name="compiler.args.textadventureengine" value="-encoding UTF-8 -source 11 -target 11 ${compiler.args}"/>
+  
+  <property name="textadventureengine.output.dir" value="${module.textadventureengine.basedir}/out/production/TextAdventureEngine"/>
+  <property name="textadventureengine.testoutput.dir" value="${module.textadventureengine.basedir}/out/test/TextAdventureEngine"/>
+  
+  <path id="textadventureengine.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="textadventureengine.module.production.classpath">
+    <path refid="${module.jdk.classpath.textadventureengine}"/>
+    <pathelement location="${basedir}/lib/json.jar"/>
+  </path>
+  
+  <path id="textadventureengine.runtime.production.module.classpath">
+    <pathelement location="${textadventureengine.output.dir}"/>
+    <pathelement location="${basedir}/lib/json.jar"/>
+  </path>
+  
+  <path id="textadventureengine.module.classpath">
+    <path refid="${module.jdk.classpath.textadventureengine}"/>
+    <pathelement location="${textadventureengine.output.dir}"/>
+    <pathelement location="${basedir}/lib/json.jar"/>
+  </path>
+  
+  <path id="textadventureengine.runtime.module.classpath">
+    <pathelement location="${textadventureengine.testoutput.dir}"/>
+    <pathelement location="${textadventureengine.output.dir}"/>
+    <pathelement location="${basedir}/lib/json.jar"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.textadventureengine">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.textadventureengine">
+    <patternset refid="excluded.from.module.textadventureengine"/>
+  </patternset>
+  
+  <path id="textadventureengine.module.sourcepath">
+    <dirset dir="${module.textadventureengine.basedir}">
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.textadventureengine" depends="compile.module.textadventureengine.production,compile.module.textadventureengine.tests" description="Compile module TextAdventureEngine"/>
+  
+  <target name="compile.module.textadventureengine.production" depends="register.custom.compilers" description="Compile module TextAdventureEngine; production classes">
+    <mkdir dir="${textadventureengine.output.dir}"/>
+    <javac2 destdir="${textadventureengine.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.textadventureengine}/javac">
+      <compilerarg line="${compiler.args.textadventureengine}"/>
+      <bootclasspath refid="textadventureengine.module.bootclasspath"/>
+      <classpath refid="textadventureengine.module.production.classpath"/>
+      <src refid="textadventureengine.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.textadventureengine"/>
+    </javac2>
+    
+    <copy todir="${textadventureengine.output.dir}">
+      <fileset dir="${module.textadventureengine.basedir}/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.textadventureengine.tests" depends="register.custom.compilers,compile.module.textadventureengine.production" description="compile module TextAdventureEngine; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.textadventureengine" description="cleanup module">
+    <delete dir="${textadventureengine.output.dir}"/>
+    <delete dir="${textadventureengine.testoutput.dir}"/>
+  </target>
+</project>
